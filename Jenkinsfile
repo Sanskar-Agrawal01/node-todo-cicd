@@ -1,34 +1,40 @@
+@Library("Shared") _
 pipeline{
-    agent { label 'dev-server' }
+    agent { label 'vinod' }
     
     stages{
+        stage("hello"){
+            steps{
+                script{
+                    hello()
+                }
+            }
+        }
         stage("Code Clone"){
             steps{
-                echo "Code Clone Stage"
-                git url: "https://github.com/LondheShubham153/node-todo-cicd.git", branch: "master"
+                script{
+                    clone("https://github.com/Sanskar-Agrawal01/node-todo-cicd.git", "master")
+                }
             }
         }
         stage("Code Build & Test"){
             steps{
-                echo "Code Build Stage"
-                sh "docker build -t node-app ."
+                script{
+                    docker_build("notes-app", "latest", "sanskarag")
+                }
             }
         }
         stage("Push To DockerHub"){
             steps{
-                withCredentials([usernamePassword(
-                    credentialsId:"dockerHubCreds",
-                    usernameVariable:"dockerHubUser", 
-                    passwordVariable:"dockerHubPass")]){
-                sh 'echo $dockerHubPass | docker login -u $dockerHubUser --password-stdin'
-                sh "docker image tag node-app:latest ${env.dockerHubUser}/node-app:latest"
-                sh "docker push ${env.dockerHubUser}/node-app:latest"
-                }
+               script{
+                docker_push("notes-app", "latest", "sanskarag")
+            }  
             }
         }
         stage("Deploy"){
             steps{
-                sh "docker compose down && docker compose up -d --build"
+                  sh "docker compose down"
+                  sh "docker compose up -d"
             }
         }
     }
